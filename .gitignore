@@ -1,0 +1,5 @@
+# Build files
+obj/
+bin/
+isolate
+test*
