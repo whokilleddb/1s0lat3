@@ -22,7 +22,7 @@ void write_to_file(char* path_to_file, char *line_to_write){
 static void prepare_user_ns(int pid){
     char* path;
     char* line;
-    int UID = (int)getuid();
+    
     /* Write UID to /proc/pid/uid_map
     Format:
     0 UID 1 

@@ -10,3 +10,5 @@
 #define exit_on_error(msg) ({fprintf(stderr,"[" RED("-") "] %s",msg); exit(EXIT_FAILURE);}) 
 
 #define STACKSIZE 1024*1024
+
+#define UID 1000
