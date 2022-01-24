@@ -51,6 +51,7 @@ int cmd_exec(void *arg){
 
     if (execvp(cmd,argv)==-1){
         exit_on_error("Cannot execute command In Isolation:(");
+        return -1;
     }
 
     exit(EXIT_SUCCESS); 
