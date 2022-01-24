@@ -54,14 +54,14 @@ int main(int argc, char* argv[]){
 
     // Setup memory for the child process
     char *stack;
-    char **stackhead;
+    char *stackhead;
     
     stack = (char *)malloc(STACKSIZE);
     if (!stack){
         exit_on_error("Failed to allocate memory for the child thread :(");
     }
-    memset(stack,0,sizeof(stack));
-    stackhead = stack + STACKSIZE - 1;
+    memset(stack,0,STACKSIZE);
+    stackhead = stack + STACKSIZE ;
 
     // When the command exits, it leaves a return status code
     // Start with cloning the UTS Namespace
