@@ -10,6 +10,7 @@
 // User-defined headers
 #include "isolate.h"
 #include "utils.h"
+#include "userns.h"
 
 // Extract the command (along with the given arguments) to be run in isolation
 int parse_args(int argc, char* argv[], struct params *params){
@@ -65,13 +66,15 @@ int main(int argc, char* argv[]){
 
     // When the command exits, it leaves a return status code
     // Start with cloning the UTS Namespace
-    int cmd_pid = clone(cmd_exec, stackhead, SIGCHLD |CLONE_NEWUTS, &cli_params);
+    int cmd_pid = clone(cmd_exec, stackhead, SIGCHLD | CLONE_NEWUTS | CLONE_NEWUSER, &cli_params);
     
     // Check if clone was successful
     if (cmd_pid < 0){
        free(stack);
        exit_on_error("Failed To Clone :(");
     }
+    // Prepare User Namespace
+    prepare_user_ns(cmd_pid);
 
     // Send 'setup done' signal to Child process
     if (write(cli_params.fd[1],"OK",2)!=2){

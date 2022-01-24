@@ -41,6 +41,11 @@ int cmd_exec(void *arg){
         exit_on_error("Failed to read close pipe :(");
     }
 
+    // Drop superuser privileges
+    if ((setuid(0)==-1) || setgid(0) == -1){
+        exit_on_error("Error setting privileges :(");
+    }
+
     char **argv  = params->argv;
     char *cmd = argv[0];
 
