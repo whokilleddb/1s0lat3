@@ -37,7 +37,7 @@ int cmd_exec(void *arg){
     }
 
     // Close reading end of the pipe once done
-    if(close(params->fd[0]){
+    if(close(params->fd[0])){
         exit_on_error("Failed to read close pipe :(");
     }
 
