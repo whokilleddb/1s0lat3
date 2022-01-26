@@ -3,6 +3,7 @@ CC          := gcc
 
 #The Target Binary Program
 TARGET      := isolate
+ROOTFSIMAGE := ubuntu-bionic-rootfs.tar.gz
 
 #The Directories, Source, Includes, Objects, Binary and Resources
 SRCDIR      := src
@@ -12,6 +13,7 @@ TARGETDIR   := bin
 SRCEXT      := c
 DEPEXT      := d
 OBJEXT      := o
+ROOTFSDIR   := rootfs
 
 #Flags, Libraries and Includes
 CFLAGS      := -Wall -Werror -Wshadow -g -O3 -D_GNU_SOURCE
@@ -25,7 +27,13 @@ SOURCES     := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 
 #Defauilt Make
-all: directories $(TARGET) 
+all: directories rootfs $(TARGET) 
+
+rootfs:
+	@mkdir -p $(ROOTFSDIR)
+	@echo "Fetching Ubuntu rootfs image" && wget -q --show-progress https://partner-images.canonical.com/oci/bionic/current/ubuntu-bionic-oci-amd64-root.tar.gz -O $(ROOTFSIMAGE)
+	@echo "Extracting Rootfs" && tar -xzf $(ROOTFSIMAGE) -C $(ROOTFSDIR) && echo "Done!"
+	@$(RM) -rf $(ROOTFSIMAGE)
 
 #Make the Directories
 directories:
@@ -50,8 +58,8 @@ $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 	@rm -f $(BUILDDIR)/$*.$(DEPEXT).tmp
 
 #Non-File Targets
-.PHONY: all clean 
+.PHONY: all clean rootfs
 
 #Clean only Objecst
 clean:
-	@$(RM) -rf $(BUILDDIR) $(TARGETDIR)
+	@$(RM) -rf $(BUILDDIR) $(TARGETDIR) $(ROOTFSDIR) 
