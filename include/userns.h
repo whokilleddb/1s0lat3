@@ -4,14 +4,12 @@
 #include "utils.h"
 #include <unistd.h>
 
-
-
 void write_to_file(char* path_to_file, char *line_to_write){
     FILE *f = fopen(path_to_file,"w");
     if (f == NULL){
         exit_on_error("Failed to open file for writing:(");
     }
-    if (fwrite(line_to_write, 1, strlen(line_to_write), f) < 0){
+    if (fwrite(line_to_write, 1, strlen(line_to_write), f) == 0){
         exit_on_error("Failed to write to file :(");
     }
     if (fclose(f) != 0){

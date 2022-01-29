@@ -12,3 +12,5 @@
 #define STACKSIZE 1024*1024
 
 #define UID 1000
+#define ROOTFS "rootfs"
+#define FSTYPE "ext4"
