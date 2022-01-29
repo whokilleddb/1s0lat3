@@ -22,7 +22,7 @@ static void prepare_mount_ns(char* rootfs){
 
     // mkdir put_old
     const char *put_old = ".put_old";
-    if(mkdir(put_old,0777) && errno != EEXIST ){
+    if((mkdir(put_old,0777) != 0) && (errno != EEXIST)){
         exit_on_error("Could not create .put_old");
     }
 
