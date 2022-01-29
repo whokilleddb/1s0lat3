@@ -36,6 +36,8 @@ int cmd_exec(void *arg){
         exit_on_error("Failed to read from pipe while awaiting 'setup done' from main");
     }
 
+    prepare_mount_ns(ROOTFS);
+
     // Close reading end of the pipe once done
     if(close(params->fd[0])){
         exit_on_error("Failed to read close pipe :(");
@@ -51,6 +53,7 @@ int cmd_exec(void *arg){
 
     if (execvp(cmd,argv)==-1){
         exit_on_error("Cannot execute command In Isolation:(");
+        return -1;
     }
 
     exit(EXIT_SUCCESS); 

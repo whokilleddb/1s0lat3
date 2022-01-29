@@ -1,57 +1,37 @@
-#Compiler and Linker
-CC          := gcc
+# Compiler To Use
+CC := gcc
 
-#The Target Binary Program
-TARGET      := isolate
+# Rootfs Image
+ROOTFSIMAGE := alpine-minirootfs-3.15.0-x86_64.tar.gz
+ROOTFSIMAGEURL := https://dl-cdn.alpinelinux.org/alpine/v3.15/releases/x86_64/alpine-minirootfs-3.15.0-x86_64.tar.gz
 
-#The Directories, Source, Includes, Objects, Binary and Resources
-SRCDIR      := src
-INCDIR      := include
-BUILDDIR    := obj
-TARGETDIR   := bin
-SRCEXT      := c
-DEPEXT      := d
-OBJEXT      := o
+# Target Binary
+TARGET := isolate
 
-#Flags, Libraries and Includes
-CFLAGS      := -Wall -Werror -Wshadow -g -O3 -D_GNU_SOURCE
-INC         := -I$(INCDIR) 
-INCDEP      := -I$(INCDIR)
+# Directories
+SRCDIR :=src
+INCDIR := include
+ROOTFSDIR := rootfs
 
-#---------------------------------------------------------------------------------
-#DO NOT EDIT BELOW THIS LINE
-#---------------------------------------------------------------------------------
-SOURCES     := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
-OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.$(OBJEXT)))
+# Compile Time Flags
+CFLAGS := -Wall -Wextra -Werror=format-security -grecord-gcc-switches -fstack-clash-protection -pipe -g -O2 -D_GNU_SOURCE
 
 #Defauilt Make
-all: directories $(TARGET) 
+all: $(TARGET) rootfs
 
-#Make the Directories
-directories:
-	@mkdir -p $(TARGETDIR)
-	@mkdir -p $(BUILDDIR)
+rootfs:
+	@$(RM) -rf $(ROOTFSIMAGE) $(ROOTFSDIR)
+	@mkdir -p $(ROOTFSDIR)
+	@echo "Fetching Ubuntu rootfs image" && wget -q --show-progress $(ROOTFSIMAGEURL) -O $(ROOTFSIMAGE)
+	@echo "Extracting Rootfs" && tar -xzf $(ROOTFSIMAGE) -C $(ROOTFSDIR) && echo "Done!"
+	@$(RM) -rf $(ROOTFSIMAGE)
 
-#Pull in dependency info for *existing* .o files
--include $(OBJECTS:.$(OBJEXT)=.$(DEPEXT))
-
-#Link
-$(TARGET): $(OBJECTS)
-	$(CC) $^ $(LIB) $(CFLAGS) -o $(TARGETDIR)/$(TARGET) 
-
-#Compile
-$(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INC) -c -o $@ $<
-	@$(CC) $(CFLAGS) $(INCDEP) -MM $(SRCDIR)/$*.$(SRCEXT) > $(BUILDDIR)/$*.$(DEPEXT)
-	@cp -f $(BUILDDIR)/$*.$(DEPEXT) $(BUILDDIR)/$*.$(DEPEXT).tmp
-	@sed -e 's|.*:|$(BUILDDIR)/$*.$(OBJEXT):|' < $(BUILDDIR)/$*.$(DEPEXT).tmp > $(BUILDDIR)/$*.$(DEPEXT)
-	@sed -e 's/.*://' -e 's/\\$$//' < $(BUILDDIR)/$*.$(DEPEXT).tmp | fmt -1 | sed -e 's/^ *//' -e 's/$$/:/' >> $(BUILDDIR)/$*.$(DEPEXT)
-	@rm -f $(BUILDDIR)/$*.$(DEPEXT).tmp
+$(TARGET): $(SRCDIR)/$(TARGET).c
+	$(CC) $(CFLAGS) -I $(INCDIR) -o $(TARGET)  $(SRCDIR)/$(TARGET).c
 
 #Non-File Targets
-.PHONY: all clean 
+.PHONY: clean rootfs
 
 #Clean only Objecst
 clean:
-	@$(RM) -rf $(BUILDDIR) $(TARGETDIR)
+	@$(RM) -rf $(TARGET) $(ROOTFSDIR) 

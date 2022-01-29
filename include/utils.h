@@ -7,8 +7,10 @@
 #define MAGENTA(string) "\x1b[35m" string "\x1b[0m"
 #define CYAN(string)    "\x1b[36m" string "\x1b[0m"
 
-#define exit_on_error(msg) ({fprintf(stderr,"[" RED("-") "] %s",msg); exit(EXIT_FAILURE);}) 
+#define exit_on_error(msg) ({fprintf(stderr,"[" RED("-") "] %s\n",msg); exit(EXIT_FAILURE);}) 
 
 #define STACKSIZE 1024*1024
 
 #define UID 1000
+#define ROOTFS "rootfs"
+#define FSTYPE "ext4"

@@ -8,9 +8,11 @@
 #include <sys/wait.h>
 
 // User-defined headers
+#include "mountns.h"
 #include "isolate.h"
 #include "utils.h"
 #include "userns.h"
+
 
 // Extract the command (along with the given arguments) to be run in isolation
 int parse_args(int argc, char* argv[], struct params *params){
@@ -66,7 +68,7 @@ int main(int argc, char* argv[]){
 
     // When the command exits, it leaves a return status code
     // Start with cloning the UTS Namespace
-    int cmd_pid = clone(cmd_exec, stackhead, SIGCHLD | CLONE_NEWUTS | CLONE_NEWUSER, &cli_params);
+    int cmd_pid = clone(cmd_exec, stackhead, SIGCHLD | CLONE_NEWUTS | CLONE_NEWUSER | CLONE_NEWNS | CLONE_NEWPID, &cli_params);
     
     // Check if clone was successful
     if (cmd_pid < 0){
