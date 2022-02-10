@@ -14,7 +14,7 @@
 #include "utils.h"
 #include "mountns.h"
 #include "userns.h"
-//#include "networkns.h"
+#include "networkns.h"
 
 
 // Flags used in name space creation
@@ -67,6 +67,7 @@ int cmd_exec(void *arg){
         return -1;
     }
 
+    // Prepare MOUNT namespace
     if (prepare_mountns() != 0){
         fprintf(stderr,"[" RED("!") "] Failed to create "RED("Mount") "namespace\n");
         return -1;
@@ -159,15 +160,20 @@ int main(int argc, char* argv[]){
        free(stack);
        exit_on_error("[" RED("!") "] The function " RED("clone()") " failed\n");
     }
-    fprintf(stdout,"[" GREEN("i") "] Successfully created " GREEN("Hostname") " namespace\n");
+    fprintf(stdout,"[" GREEN("i") "] Successfully created " GREEN("UTS") " namespace\n");
 
 
-    // Prepare User Namespace 
-    if (prepare_user_ns(cmd_pid) != 0){
+    // Prepare USER Namespace 
+    if (prepare_userns(cmd_pid) != 0){
         exit_on_error("[" RED("!") "] Failed to create " RED("User") " namespace\n");
     }
     fprintf(stdout,"[" GREEN("i") "] Successfully created " GREEN("User") " namespace\n");
     
+    // Prepare Network Namespace 
+    if (prepare_networkns(cmd_pid) != 0){
+        exit_on_error("[" RED("!") "] Failed to create " RED("Network") " namespace\n");
+    }
+    fprintf(stdout,"[" GREEN("i") "] Successfully created " GREEN("Network") " namespace\n");
 
     // Send 'setup done' signal to Child process
     if (write(cli_params.fd[1],"OK",2)!=2){

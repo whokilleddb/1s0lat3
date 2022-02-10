@@ -4,6 +4,9 @@
 #include <linux/limits.h>
 #include "userns.h"
 
+#define UID 1000
+
+// Write to a file
 int write_to_file(char* path_to_file, char *line_to_write){
     FILE *f = fopen(path_to_file,"w");
     if (f == NULL){
@@ -21,7 +24,9 @@ int write_to_file(char* path_to_file, char *line_to_write){
     return 0;
 }
 
-int prepare_user_ns(int pid){
+
+// Prepare User Namespace
+int prepare_userns(int pid){
     char* path;
     char* line;
     

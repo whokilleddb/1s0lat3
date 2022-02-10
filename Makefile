@@ -12,6 +12,7 @@ MOUNTNS := mountns
 UTILS := utils
 MOUNTNS := mountns
 PIDNS := pidns
+NETNS := networkns
 
 # Directories
 SRCDIR :=src
@@ -23,7 +24,7 @@ ROOTFSDIR := rootfs
 CFLAGS := -Wall -Wextra -Werror=format-security -grecord-gcc-switches -fstack-clash-protection -pipe -g -O2 -D_GNU_SOURCE
 
 #Defauilt Make
-all: rootfs utils pidns mountns mountns userns $(TARGET) 
+all: rootfs utils pidns mountns mountns userns networkns $(TARGET) 
 
 rootfs:
 	@$(RM) -rf $(ROOTFSIMAGE) $(ROOTFSDIR)
@@ -55,14 +56,15 @@ userns: $(SRCDIR)/$(USERNS).c
 	@echo "[+] Compiling User Namespace Program"
 	$(CC) $(CFLAGS) -I ${INCDIR} -c -o $(OBJDIR)/$(USERNS).o $(SRCDIR)/$(USERNS).c 
 
+networkns: $(SRCDIR)/$(NETNS).c 
+	@mkdir -p $(OBJDIR)
+	@echo "[+] Compiling Network Namespace Program"
+	$(CC) $(CFLAGS) -I ${INCDIR} -c -o $(OBJDIR)/$(NETNS).o $(SRCDIR)/$(NETNS).c -lnetlink
 
 $(TARGET): $(SRCDIR)/$(TARGET).c $(OBJDIR)/$(USERNS).o $(OBJDIR)/$(MOUNTNS).o $(OBJDIR)/$(UTILS).o
 	@echo "[+] Compiling"
 	$(CC) $(CFLAGS) -I ${INCDIR} -c -o $(OBJDIR)/$(TARGET).o $(SRCDIR)/$(TARGET).c 
-	$(CC) $(CFLAGS) $(OBJDIR)/$(USERNS).o $(OBJDIR)/$(MOUNTNS).o $(OBJDIR)/$(TARGET).o $(OBJDIR)/$(UTILS).o $(OBJDIR)/$(PIDNS).o -o $(TARGET) 
-
-
-
+	$(CC) $(CFLAGS) $(OBJDIR)/$(USERNS).o $(OBJDIR)/$(MOUNTNS).o $(OBJDIR)/$(TARGET).o $(OBJDIR)/$(UTILS).o $(OBJDIR)/$(PIDNS).o $(OBJDIR)/$(NETNS).o -o $(TARGET) 
 
 #Non-File Targets
 .PHONY: clean rootfs 

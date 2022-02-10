@@ -1,5 +1,6 @@
 #pragma once
-#ifndef __PREPARE_USER_NS
+#ifndef __USER_NS
+#define __USER_NS
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -7,6 +8,6 @@
 
 #include "utils.h"
 
-int prepare_user_ns(int pid);
+int prepare_userns(int pid);
 
 #endif
