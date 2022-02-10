@@ -165,15 +165,15 @@ int main(int argc, char* argv[]){
 
     // Prepare USER Namespace 
     if (prepare_userns(cmd_pid) != 0){
-        exit_on_error("[" RED("!") "] Failed to create " RED("User") " namespace\n");
+        exit_on_error("[" RED("!") "] Failed to create " RED("USER") " namespace\n");
     }
-    fprintf(stdout,"[" GREEN("i") "] Successfully created " GREEN("User") " namespace\n");
+    fprintf(stdout,"[" GREEN("i") "] Successfully created " GREEN("USER") " namespace\n");
     
     // Prepare Network Namespace 
     if (prepare_networkns(cmd_pid) != 0){
-        exit_on_error("[" RED("!") "] Failed to create " RED("Network") " namespace\n");
+        exit_on_error("[" RED("!") "] Failed to create " RED("NETWORK") " namespace\n");
     }
-    fprintf(stdout,"[" GREEN("i") "] Successfully created " GREEN("Network") " namespace\n");
+    fprintf(stdout,"[" GREEN("i") "] Successfully created " GREEN("NETWORK") " namespace\n");
 
     // Send 'setup done' signal to Child process
     if (write(cli_params.fd[1],"OK",2)!=2){

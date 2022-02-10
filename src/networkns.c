@@ -3,10 +3,13 @@ https://maz-programmersdiary.blogspot.com/2011/09/netlink-sockets.html
 
 God protect the precious soul who wrote this
 */
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <sched.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <net/if.h>
 #include <sys/uio.h>
 #include <sys/ioctl.h>
@@ -14,9 +17,9 @@ God protect the precious soul who wrote this
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <linux/veth.h>
-#include <libnetlink.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
+#include "libnetlink.h"
 
 #include "utils.h"
 #include "networkns.h"
@@ -36,31 +39,65 @@ struct iplink_req{
     char buf[MAX_PAYLOAD];
 };
 
+// Functions Shamelessly taken from https://github.com/shemminger/iproute2/blob/main/lib/libnetlink.c
+int addattr_l(struct nlmsghdr *n, int maxlen, int type, const void *data, int alen){
+	int len = RTA_LENGTH(alen);
+	struct rtattr *rta;
+
+	if (NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len) > (unsigned int)maxlen) {
+		fprintf(stderr,
+			"addattr_l ERROR: message exceeded bound of %d\n",
+			maxlen);
+		return -1;
+	}
+	rta = NLMSG_TAIL(n);
+	rta->rta_type = type;
+	rta->rta_len = len;
+	if (alen)
+		memcpy(RTA_DATA(rta), data, alen);
+	n->nlmsg_len = NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len);
+	return 0;
+}
+
+struct rtattr *addattr_nest(struct nlmsghdr *n, int maxlen, int type)
+{
+	struct rtattr *nest = NLMSG_TAIL(n);
+
+	addattr_l(n, maxlen, type, NULL, 0);
+	return nest;
+}
+
+int addattr_nest_end(struct nlmsghdr *n, struct rtattr *nest)
+{
+	nest->rta_len = (void *)NLMSG_TAIL(n) - (void *)nest;
+	return n->nlmsg_len;
+}
+
 
 // Check netlink message response from kernel
 int check_response(int sock_fd){
     struct iovec iov;
     struct msghdr msg = {
-            .msg_name = NULL,
-            .msg_namelen = 0,
-            .msg_iov = &iov,
-            .msg_iovlen = 1
+        .msg_name = NULL,
+        .msg_namelen = 0,
+        .msg_iov = &iov,
+        .msg_iovlen = 1
     };
     
-    char *resp;
-    resp = (char *)malloc(MAX_PAYLOAD);
+    char *resp = (char *)malloc(MAX_PAYLOAD);
     if (resp == NULL){
         fprintf(stderr, "[" RED("!") "] Out of memory\n");
         return -1;
     }
 
     // Check response
-    struct iovec *resp_iov = msg->msg_iov;
+    struct iovec *resp_iov = msg.msg_iov;
     resp_iov->iov_base = &resp;
     resp_iov->iov_len = MAX_PAYLOAD;
 
+    ssize_t resp_len;
     recv_reply: 
-        ssize_t resp_len = recvmsg(fd, msg, 0);
+        resp_len = recvmsg(sock_fd, &msg, 0);
         if (resp_len == 0 || resp_len < 0 ){
             if(errno==EINTR){
                 goto recv_reply;
@@ -90,7 +127,7 @@ int check_response(int sock_fd){
     if (hdr->nlmsg_flags == NLMSG_ERROR){
         // See netlink (7)
         struct nlmsgerr *err = (struct nlmsgerr *) NLMSG_DATA(hdr);
-        if(datalen < sizeof(struct nlmsgerr)){
+        if(datalen < (int)sizeof(struct nlmsgerr)){
             fprintf(stderr, "[" RED("!") "] Received malformed "RED("Netlink")" message\n");
             return -1;
         }
@@ -186,7 +223,7 @@ int create_veth(int sock_fd, char *ifname, char *peername){
     struct rtattr *linkdata;
     struct rtattr *peerinfo;
 
-    if(memset(&linkinfo,0,sizeof(rtattr)) == NULL || memset(&linkdata,0,sizeof(rtattr)) == NULL || memset(&peerinfo,0,sizeof(rtattr)) == NULL ){
+    if(memset(&linkinfo,0,sizeof(struct rtattr)) == NULL || memset(&linkdata,0,sizeof(struct rtattr)) == NULL || memset(&peerinfo,0,sizeof(struct rtattr)) == NULL ){
         fprintf(stderr,"[" RED("-") "] The function " RED("memset()") " failed\n");
         return -1;
     }
@@ -252,7 +289,7 @@ int interface_up(char *ifname, char *ip, char *netmask){
     }
 
     // Copy interface name
-    strncpy(ifr.ifr_name, ifname, strlen(ifname));
+    strcpy(ifr.ifr_name, ifname);
 
     struct sockaddr_in saddr;
     if(memset(&saddr, 0, sizeof(struct sockaddr_in)) == NULL){
@@ -330,7 +367,7 @@ int move_interface_to_ns(int sock_fd, char *ifname, int netns){
     addattr_l(&req.n, sizeof(req), IFLA_IFNAME, ifname, strlen(ifname));
 
     // Send message
-    if (send_nlmsg(sock_fd, n) != 0){
+    if (send_nlmsg(sock_fd, &req.n) != 0){
         fprintf(stderr,"[" RED("-") "] Failed to send "RED("Netlink Message")"\n");
         return -1;
     }
@@ -343,6 +380,7 @@ int move_interface_to_ns(int sock_fd, char *ifname, int netns){
 
     return 0;
 }
+
 
 // Prepare Network Namespace
 int prepare_networkns(int child_pid){
@@ -377,14 +415,14 @@ int prepare_networkns(int child_pid){
     int child_fd = ns_fd(child_pid);
 
     // Move VETH1 to child namespace
-    if(move_interface_to_ns(sock_fd, VETH1, child_fd) < 0){
+    if(move_interface_to_ns(s, VETH1, child_fd) < 0){
         fprintf(stderr,"["RED("!")"] Failed to move %s to child namespace\n", VETH1);
         return -1;
     }
 
     // See man setns(2)
     if (setns(child_fd, CLONE_NEWNET) < 0){
-        fprintf(stderr,"["RED("!")"] Failed to move thread to child namespace\n", VETH1);
+        fprintf(stderr,"["RED("!")"] Failed to move thread to child namespace\n");
         return -1;
     }
 
@@ -396,7 +434,7 @@ int prepare_networkns(int child_pid){
 
     // See man setns(2)
     if (setns(host_fd, CLONE_NEWNET) < 0){
-        fprintf(stderr,"["RED("!")"] Failed to move thread back to host namespace\n", VETH1);
+        fprintf(stderr,"["RED("!")"] Failed to move thread back to host namespace\n");
         return -1;
     }
 

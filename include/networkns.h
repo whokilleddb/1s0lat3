@@ -1,6 +1,8 @@
 #ifndef __NETWORK_NS
 #define __NETWORK_NS
 
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
 #include "utils.h"
 
 // Netlink Message Payload
