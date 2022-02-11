@@ -69,10 +69,10 @@ int cmd_exec(void *arg){
 
     // Prepare MOUNT namespace
     if (prepare_mountns() != 0){
-        fprintf(stderr,"[" RED("!") "] Failed to create "RED("Mount") "namespace\n");
+        fprintf(stderr,"[" RED("!") "] Failed to create "RED("MOUNT") "namespace\n");
         return -1;
     }
-    fprintf(stdout,"[" GREEN("i") "] Successfully created " GREEN("Mount") " namespace\n");
+    fprintf(stdout,"[" GREEN("i") "] Successfully created " GREEN("MOUNT") " namespace\n");
 
     // Close reading end of the pipe once done
     if(close(params->fd[0])){
