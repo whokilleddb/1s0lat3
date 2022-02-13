@@ -44,7 +44,7 @@ int create_veth(int child_pid){
 
 
 // Bring up interface
-int interface_up(char *ifname, char *ip, char *netmask){
+int interface_up(char *ifname, char *ip, char *netmask, short if_flags){
     // See: https://stackoverflow.com/questions/5858655/linux-programmatically-up-down-an-interface-kernel/5859449
     int s = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP );
     if(s < 0){
@@ -89,7 +89,7 @@ int interface_up(char *ifname, char *ip, char *netmask){
     }
 
     // Set interface flags
-    ifr.ifr_flags |= IFF_UP | IFF_BROADCAST | IFF_RUNNING | IFF_MULTICAST;
+    ifr.ifr_flags |= if_flags;
     if(ioctl(s, SIOCSIFFLAGS, &ifr) <0 ){
         fprintf(stderr, "["RED("!")"] Failed to set interface flags for %s with "RED("ioctl()")" call\n", ifname);
         return -1;
@@ -132,7 +132,8 @@ int  prepare_networkns(int child_pid){
     }
 
     // Set veth0 up with given ip and netmask
-    if(interface_up(VETH0, IP0, NETMASK) < 0){
+    short if_flags = IFF_UP | IFF_BROADCAST | IFF_RUNNING | IFF_MULTICAST;
+    if(interface_up(VETH0, IP0, NETMASK, if_flags) < 0){
         fprintf(stderr, "["RED("!")"] Could not setup %s interface\n", VETH0);
         return -1;
     }
@@ -147,7 +148,14 @@ int  prepare_networkns(int child_pid){
     }
 
     // Set veth1 up with given ip and netmask
-    if(interface_up(VETH1, IP1, NETMASK) < 0){
+    if(interface_up(VETH1, IP1, NETMASK, if_flags) < 0){
+        fprintf(stderr, "["RED("!")"] Could not setup %s interface\n", VETH1);
+        return -1;
+    }
+
+    // Set localhost up inside namespace
+    short lo_flags = IFF_UP | IFF_BROADCAST | IFF_RUNNING;
+    if(interface_up("lo", "127.0.0.1", "255.0.0.0", lo_flags) < 0){
         fprintf(stderr, "["RED("!")"] Could not setup %s interface\n", VETH1);
         return -1;
     }

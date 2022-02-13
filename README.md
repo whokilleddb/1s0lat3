@@ -52,3 +52,10 @@ lrwxrwxrwx    1 root     root             0 Feb 11 16:44 uts -> uts:[4026532251]
 ```bash
 $ make clean
 ```
+
+# Notes
+- You will need `libnl` library, especially the routing family of functions
+
+# To-Do
+- Add routing inside Name-space
+- COnfigure IP Tables to allow internet access

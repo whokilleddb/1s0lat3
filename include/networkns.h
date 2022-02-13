@@ -12,7 +12,7 @@
 #define NETMASK "255.255.255.0" // Netmask of our virtual network
 
 int prepare_networkns(int child_pid);
-int interface_up(char *ifname, char *ip, char *netmask);
+int interface_up(char *ifname, char *ip, char *netmask, short if_flags);
 int ns_fd(int pid);
 int create_veth(int child_pid);
 #endif
