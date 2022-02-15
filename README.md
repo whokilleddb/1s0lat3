@@ -4,7 +4,12 @@
   <img src="https://shields.io/badge/Tested_On-Ubuntu_20.04.3_LTS_x86__64 -red" />
 </p>
 
+<p align=center>
+<a href="https://asciinema.org/a/850Ja2A5ESQoVOGMMuqMKMTPh" target="_blank"><img src="https://asciinema.org/a/850Ja2A5ESQoVOGMMuqMKMTPh.svg" /></a>
+</p>
+
 <h2>Why use Docker when you can just is0lat3?</h2>
+
 
 Run a process in separate Namespaces to provide isolation for the processes. Namespaces isolation implemented so far:
 - `uts`
