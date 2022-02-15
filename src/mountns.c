@@ -43,6 +43,7 @@ int prepare_mountns(void){
 
     //prepare proc fs
     if (prepare_pidns() != 0){
+        fprintf(stderr,"[" RED("!") "] Could not prepare "RED("PID")" namespace\n");
         return -1;
     }
     fprintf(stdout,"[" GREEN("i") "] Successfully created " GREEN("PID") " namespace\n");
