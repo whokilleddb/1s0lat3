@@ -1,5 +1,12 @@
-#include <stdlib.h>
 #pragma once
+
+#ifndef __UTILS__
+#define __UTILS__
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+
 #define RED(string)     "\x1b[31m" string "\x1b[0m"
 #define GREEN(string)   "\x1b[32m" string "\x1b[0m"
 #define YELLOW(string)  "\x1b[33m" string "\x1b[0m"
@@ -7,10 +14,6 @@
 #define MAGENTA(string) "\x1b[35m" string "\x1b[0m"
 #define CYAN(string)    "\x1b[36m" string "\x1b[0m"
 
-#define exit_on_error(msg) ({fprintf(stderr,"[" RED("-") "] %s\n",msg); exit(EXIT_FAILURE);}) 
+void exit_on_error(const char *format, ...);
 
-#define STACKSIZE 1024*1024
-
-#define UID 1000
-#define ROOTFS "rootfs"
-#define FSTYPE "ext4"
+#endif

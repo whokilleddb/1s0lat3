@@ -7,31 +7,72 @@ ROOTFSIMAGEURL := https://dl-cdn.alpinelinux.org/alpine/v3.15/releases/x86_64/al
 
 # Target Binary
 TARGET := isolate
+USERNS := userns
+MOUNTNS := mountns
+UTILS := utils
+MOUNTNS := mountns
+PIDNS := pidns
+NETNS := networkns
 
 # Directories
 SRCDIR :=src
 INCDIR := include
+OBJDIR := obj
 ROOTFSDIR := rootfs
 
+# External libraries
+LIBNL := /usr/include/libnl3/
+LDFLAGS :=  -lnl-route-3 -lnl-3 
+
 # Compile Time Flags
-CFLAGS := -Wall -Wextra -Werror=format-security -grecord-gcc-switches -fstack-clash-protection -pipe -g -O2 -D_GNU_SOURCE
+CFLAGS := -Wall -Wextra -Werror -grecord-gcc-switches -fstack-clash-protection -pipe -g -O2 -D_GNU_SOURCE
 
 #Defauilt Make
-all: $(TARGET) rootfs
+all: rootfs utils pidns mountns mountns userns networkns $(TARGET) 
 
 rootfs:
 	@$(RM) -rf $(ROOTFSIMAGE) $(ROOTFSDIR)
 	@mkdir -p $(ROOTFSDIR)
-	@echo "Fetching Ubuntu rootfs image" && wget -q --show-progress $(ROOTFSIMAGEURL) -O $(ROOTFSIMAGE)
-	@echo "Extracting Rootfs" && tar -xzf $(ROOTFSIMAGE) -C $(ROOTFSDIR) && echo "Done!"
+	@echo "[+] Fetching Alpine rootfs image" && wget -q --show-progress $(ROOTFSIMAGEURL) -O $(ROOTFSIMAGE)
+	@echo "[+] Extracting Rootfs" && tar -xzf $(ROOTFSIMAGE) -C $(ROOTFSDIR) && echo "Done!"
 	@$(RM) -rf $(ROOTFSIMAGE)
 
-$(TARGET): $(SRCDIR)/$(TARGET).c
-	$(CC) $(CFLAGS) -I $(INCDIR) -o $(TARGET)  $(SRCDIR)/$(TARGET).c
+
+utils: $(SRCDIR)/$(UTILS).c 
+	@echo "[+] Compiling Program Utils"
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -I ${INCDIR} -c -o $(OBJDIR)/$(UTILS).o $(SRCDIR)/$(UTILS).c 
+
+
+pidns: $(SRCDIR)/$(PIDNS).c 
+	@mkdir -p $(OBJDIR)
+	@echo "[+] Compiling PID Namespace Program"
+	$(CC) $(CFLAGS) -I ${INCDIR} -c -o $(OBJDIR)/$(PIDNS).o $(SRCDIR)/$(PIDNS).c 
+
+
+mountns: $(SRCDIR)/$(MOUNTNS).c
+	@mkdir -p $(OBJDIR)
+	@echo "[+] Compiling Mount Namespace Program"
+	$(CC) $(CFLAGS) -I ${INCDIR} -c -o $(OBJDIR)/$(MOUNTNS).o $(SRCDIR)/$(MOUNTNS).c 
+
+userns: $(SRCDIR)/$(USERNS).c 
+	@mkdir -p $(OBJDIR)
+	@echo "[+] Compiling User Namespace Program"
+	$(CC) $(CFLAGS) -I ${INCDIR} -c -o $(OBJDIR)/$(USERNS).o $(SRCDIR)/$(USERNS).c 
+
+networkns: $(SRCDIR)/$(NETNS).c 
+	@mkdir -p $(OBJDIR)
+	@echo "[+] Compiling Network Namespace Program"
+	$(CC) $(CFLAGS) -I ${INCDIR} -I ${LIBNL} -c -o $(OBJDIR)/$(NETNS).o $(SRCDIR)/$(NETNS).c $(LDFLAGS) 
+
+$(TARGET): $(SRCDIR)/$(TARGET).c $(OBJDIR)/$(USERNS).o $(OBJDIR)/$(MOUNTNS).o $(OBJDIR)/$(UTILS).o
+	@echo "[+] Compiling"
+	$(CC) $(CFLAGS) -I ${INCDIR} -c -o $(OBJDIR)/$(TARGET).o $(SRCDIR)/$(TARGET).c 
+	$(CC) $(CFLAGS) $(OBJDIR)/$(USERNS).o $(OBJDIR)/$(MOUNTNS).o $(OBJDIR)/$(TARGET).o $(OBJDIR)/$(UTILS).o $(OBJDIR)/$(PIDNS).o $(OBJDIR)/$(NETNS).o $(LDFLAGS)  -o $(TARGET) 
 
 #Non-File Targets
-.PHONY: clean rootfs
+.PHONY: clean rootfs 
 
 #Clean only Objecst
 clean:
-	@$(RM) -rf $(TARGET) $(ROOTFSDIR) 
+	@$(RM) -rf $(TARGET) $(ROOTFSDIR) $(OBJDIR)
