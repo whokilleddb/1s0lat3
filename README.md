@@ -11,7 +11,7 @@ Run a process in separate Namespaces to provide isolation for the processes. Nam
 - `user`
 - `network`
 - `pid`
--`mount`
+- `mount`
 
 ## How to compile?
 ```bash
@@ -26,7 +26,7 @@ Syntax:
 
 Example: 
 ```bash
-$ sudo ./isolate /bin/sh
+$  sudo ./isolate /bin/sh
 [+] 1s0lat3 by @whokilleddb
 [>] Command to be run in 1s0lati0n: /bin/sh 
 [i] Successfully created UTS namespace
@@ -34,20 +34,13 @@ $ sudo ./isolate /bin/sh
 [i] Successfully created NETWORK namespace
 [i] Successfully created PID namespace
 [i] Successfully created MOUNT namespace
-/ # whoami
-root
-/ # ls -la /proc/$$/ns/
-total 0
-dr-x--x--x    2 root     root             0 Feb 11 16:44 .
-dr-xr-xr-x    9 root     root             0 Feb 11 16:44 ..
-lrwxrwxrwx    1 root     root             0 Feb 11 16:44 cgroup -> cgroup:[4026531835]
-lrwxrwxrwx    1 root     root             0 Feb 11 16:44 ipc -> ipc:[4026531839]
-lrwxrwxrwx    1 root     root             0 Feb 11 16:44 mnt -> mnt:[4026532250]
-lrwxrwxrwx    1 root     root             0 Feb 11 16:44 net -> net:[4026532254]
-lrwxrwxrwx    1 root     root             0 Feb 11 16:44 pid -> pid:[4026532252]
-lrwxrwxrwx    1 root     root             0 Feb 11 16:44 pid_for_children -> pid:[4026532252]
-lrwxrwxrwx    1 root     root             0 Feb 11 16:44 user -> user:[4026532249]
-lrwxrwxrwx    1 root     root             0 Feb 11 16:44 uts -> uts:[4026532251]
+/ # cat /etc/os-release 
+NAME="Alpine Linux"
+ID=alpine
+VERSION_ID=3.15.0
+PRETTY_NAME="Alpine Linux v3.15"
+HOME_URL="https://alpinelinux.org/"
+BUG_REPORT_URL="https://bugs.alpinelinux.org/"
 / # exit
 [+] Bye :D
 ```
