@@ -26,7 +26,7 @@ Syntax:
 
 Example: 
 ```bash
-$  sudo ./isolate /bin/sh
+$ sudo ./isolate /bin/sh
 [+] 1s0lat3 by @whokilleddb
 [>] Command to be run in 1s0lati0n: /bin/sh 
 [i] Successfully created UTS namespace
