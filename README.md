@@ -7,7 +7,11 @@
 <h2>Why use Docker when you can just is0lat3?</h2>
 
 Run a process in separate Namespaces to provide isolation for the processes. Namespaces isolation implemented so far:
-- `uts`: Unix Timesharing (UTS) namespaces provide isolation for the hostname and domain name.
+- `uts`
+- `user`
+- `network`
+- `pid`
+-`mount`
 
 ## How to compile?
 ```bash
@@ -58,4 +62,4 @@ $ make clean
 
 # To-Do
 - Add routing inside Name-space
-- COnfigure IP Tables to allow internet access
+- Configure IP Tables to allow internet access

@@ -15,6 +15,8 @@
 #include <netlink/netlink.h>
 #include <netlink/route/link.h>
 #include <netlink/route/link/veth.h>
+#include <net/route.h>
+#include <sys/types.h>
 
 #include "networkns.h"
 #include "utils.h"
@@ -104,6 +106,40 @@ int interface_up(char *ifname, char *ip, char *netmask, short if_flags){
 }
 
 
+// Add routing table
+int add_route(){
+    //See: https://stackoverflow.com/questions/22733967/linux-how-to-set-default-route-from-c
+    int sockfd;
+    struct rtentry route;
+    struct sockaddr_in *addr;
+    int err = 0;
+
+    // create the socket
+    if((sockfd = socket(AF_INET, SOCK_DGRAM, 0))<0){
+        fprintf(stderr,"["RED("!")"] Could not create socket\n");
+        return -1;
+    }
+
+    memset(&route, 0, sizeof(route));
+    addr = (struct sockaddr_in*) &route.rt_gateway;
+    addr->sin_family = AF_INET;
+    addr->sin_addr.s_addr = inet_addr(IP0);
+    addr = (struct sockaddr_in*) &route.rt_dst;
+    addr->sin_family = AF_INET;
+    addr->sin_addr.s_addr = INADDR_ANY;
+    addr = (struct sockaddr_in*) &route.rt_genmask;
+    addr->sin_family = AF_INET;
+    addr->sin_addr.s_addr = INADDR_ANY;
+    route.rt_flags = RTF_UP | RTF_GATEWAY;
+    route.rt_metric = METRICS;
+    route.rt_dev = VETH1;
+    if ((err = ioctl(sockfd, SIOCADDRT, &route)) != 0) {
+        fprintf(stderr,"["RED("!")"] " RED("SIOCADDRT")" failed\n");
+        return -1;
+    }
+    return 0;
+}
+
 // Get a file descriptor inside a namespace
 int ns_fd(int pid){
     char *path;
@@ -157,6 +193,10 @@ int  prepare_networkns(int child_pid){
     short lo_flags = IFF_UP | IFF_BROADCAST | IFF_RUNNING;
     if(interface_up("lo", "127.0.0.1", "255.0.0.0", lo_flags) < 0){
         fprintf(stderr, "["RED("!")"] Could not setup %s interface\n", VETH1);
+        return -1;
+    }
+    if (add_route() != 0){
+        fprintf(stderr, "["RED("!")"] Failed to add route\n");
         return -1;
     }
 
