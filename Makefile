@@ -40,7 +40,7 @@ LDFLAGS :=  -lnl-route-3 -lnl-3
 # Compile Time Flags
 CFLAGS := -Wall -Wextra -Werror -grecord-gcc-switches -fstack-clash-protection -pipe -g -O2 -D_GNU_SOURCE
 
-#Defauilt Make
+#Default Make targets
 all: rootfs utils pidns mountns mountns userns networkns $(TARGET) 
 
 rootfs:
