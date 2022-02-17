@@ -12,6 +12,7 @@
 
 // User-defined headers
 #include "utils.h"
+#include "uts.h"
 #include "mountns.h"
 #include "userns.h"
 #include "networkns.h"
@@ -49,11 +50,39 @@ void print_isolated_cmd(int argc, char **argv){
     fprintf(stdout,"\n");
 }
 
+
+// Set hostname and prepare /etc/hostname
+int configure_hostname(){
+    // Set hostname for new namespace
+    if (sethostname(HOSTNAME,sizeof(HOSTNAME)) != 0){
+        fprintf(stderr,"["RED("!")"] Failed to set Hostname with "RED("sethostname()")"\n");
+        return -1;
+    }
+
+    // Write to /etc/hostname
+    FILE *fp = fopen("/etc/hostname","w");
+    if(fp == NULL){
+        fprintf(stderr,"["RED("!")"] Failed open "RED("/etc/hostname")" for writing\n");
+        return -1;
+    }
+    if(fprintf(fp,"%s\n",HOSTNAME) < 0){
+        fprintf(stderr,"["RED("!")"] Failed to write to "RED("/etc/hostname")"\n");
+        fclose(fp);
+        return -1;
+    }
+    if (fclose(fp) != 0){
+        fprintf(stderr,"["RED("!")"] Failed to close "RED("/etc/hostname")" after writing\n");
+        return -1;
+    }
+    return 0;
+}
+
 // Child process to be called to run a command 
 int cmd_exec(void *arg){
     // Send a SIGKILL if the isolated process dies
     if (prctl(PR_SET_PDEATHSIG, SIGKILL)<0){
         fprintf(stderr,"[" RED("!") "] Cannot Set" RED("prctl()")"\n");
+        exit(EXIT_FAILURE);
         return -1;
     }
 
@@ -64,25 +93,36 @@ int cmd_exec(void *arg){
     char buf[2];
     if(read(params->fd[0],buf,2)!= 2){
         fprintf(stderr, "[" RED("!") "] Failed to read from pipe while awaiting "RED("'setup done'")" from main");
+        exit(EXIT_FAILURE);
         return -1;
     }
 
     // Prepare MOUNT namespace
     if (prepare_mountns() != 0){
         fprintf(stderr,"[" RED("!") "] Failed to create "RED("MOUNT") " namespace\n");
+        exit(EXIT_FAILURE);
         return -1;
     }
     fprintf(stdout,"[" GREEN("i") "] Successfully created " GREEN("MOUNT") " namespace\n");
 
+    // Set hostname for new namespace
+    if (configure_hostname() != 0){
+        fprintf(stderr,"["RED("!")"] Could not set hostname inside new namespace\n");
+        exit(EXIT_FAILURE);
+        return -1;
+    }
+
     // Close reading end of the pipe once done
     if(close(params->fd[0])){
         fprintf(stderr, "[" RED("!") "] Failed to close pipe\n");
+        exit(EXIT_FAILURE);
         return -1;
     }
 
     // Drop superuser privileges
     if ((setuid(0)==-1) || setgid(0) == -1){
         fprintf(stderr, "[" RED("!") "] Could not set privileges\n");
+        exit(EXIT_FAILURE);
         return -1;
     }
 
@@ -91,6 +131,7 @@ int cmd_exec(void *arg){
 
     if (execvp(cmd,argv)==-1){
         fprintf(stderr,"[" RED("!")"] Cannot execute command in Isolation :(\n");
+        exit(EXIT_FAILURE); 
         return -1;
     }
 

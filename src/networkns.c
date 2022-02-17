@@ -195,6 +195,8 @@ int  prepare_networkns(int child_pid){
         fprintf(stderr, "["RED("!")"] Could not setup %s interface\n", VETH1);
         return -1;
     }
+
+    // Add route via default gateway inside namespace
     if (add_route() != 0){
         fprintf(stderr, "["RED("!")"] Failed to add route\n");
         return -1;
@@ -205,7 +207,7 @@ int  prepare_networkns(int child_pid){
         fprintf(stderr,"["RED("!")"] Failed to move thread back to host namespace\n");
         return -1;
     }
-    
+
     close(host_fd);
     close(child_fd);
     return 0;
