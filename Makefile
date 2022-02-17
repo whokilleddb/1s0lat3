@@ -2,8 +2,8 @@
 CC := gcc
 
 # Rootfs Image
-ROOTFSIMAGE := alpine-minirootfs-3.15.0-x86_64.tar.gz
-ROOTFSIMAGEURL := https://dl-cdn.alpinelinux.org/alpine/v3.15/releases/x86_64/alpine-minirootfs-3.15.0-x86_64.tar.gz
+ROOTFSIMAGE := ubuntu-base-18.04.5-base-amd64.tar.gz
+ROOTFSIMAGEURL := http://cdimage.ubuntu.com/ubuntu-base/releases/18.04/release/ubuntu-base-18.04.5-base-amd64.tar.gz
 
 # Colors
 NONE := \033[00m
